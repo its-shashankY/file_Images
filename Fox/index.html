@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixiJS Isometric Tilemap with Multi-Row Spritesheet</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.3.1/pixi.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #000000;
+        }
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container"></div>
+    <script>
+        // Configuration
+        const config = {
+            width: window.innerWidth,
+            height: window.innerHeight,
+            backgroundColor: 0x1099bb,
+            resolution: window.devicePixelRatio || 1,
+            autoDensity: true,
+        };
+
+        // Create PixiJS application
+        const app = new PIXI.Application(config);
+        document.getElementById('game-container').appendChild(app.view);
+
+        // Map configuration
+        const mapData = {
+            width: 16,
+            height: 16,
+            tileWidth: 512,
+            tileHeight: 256,
+            orientation: "isometric",
+        };
+
+        const collisionMap = {
+            buildings: [],
+            mapBounds: {
+                minX: 0,
+                minY: 0,
+                maxX: mapData.width * mapData.tileWidth,
+                maxY: mapData.height * mapData.tileHeight
+            }
+        };
+
+         const tileTextures = {
+            6: 'https://raw.githubusercontent.com/its-shashankY/filterImage/refs/heads/master/Untitled%20(5).png',
+            10: 'https://raw.githubusercontent.com/its-shashankY/filterImage/refs/heads/master/Remove%20background%20project%20(10).png',
+            14: 'https://raw.githubusercontent.com/its-shashankY/filterImage/refs/heads/master/Untitled%20(7).png',
+            3: 'https://raw.githubusercontent.com/its-shashankY/filterImage/refs/heads/master/Untitled%20(3).png',
+            18: 'https://raw.githubusercontent.com/its-shashankY/filterImage/refs/heads/master/Temple_House.png',
+            20: 'https://raw.githubusercontent.com/its-shashankY/filterImage/refs/heads/master/Untitled%20(6).png',
+            22: 'https://raw.githubusercontent.com/its-shashankY/filterImage/refs/heads/master/Untitled%20(9).png',
+            26: 'https://raw.githubusercontent.com/its-shashankY/filterImage/refs/heads/master/Untitled%20(10).png',
+            30: 'https://raw.githubusercontent.com/its-shashankY/filterImage/refs/heads/master/Untitled%20(11).png',
+            34: 'https://raw.githubusercontent.com/its-shashankY/filterImage/refs/heads/master/Untitled%20(8).png',
+            90: 'https://raw.githubusercontent.com/its-shashankY/filterImage/refs/heads/master/Remove%20background%20project%20(9).png',
+            5: 'https://raw.githubusercontent.com/its-shashankY/filterImage/refs/heads/master/Remove%20background%20project%20(3).png',
+            9: 'https://raw.githubusercontent.com/its-shashankY/filterImage/refs/heads/master/Remove%20background%20project%20(4).png',
+            13: 'https://raw.githubusercontent.com/its-shashankY/filterImage/refs/heads/master/Remove%20background%20project%20(5).png',
+            17: 'https://raw.githubusercontent.com/its-shashankY/filterImage/refs/heads/master/Remove%20background%20project%20(6).png',
+            38: 'https://raw.githubusercontent.com/its-shashankY/filterImage/refs/heads/master/Untitled%20(19).png',
+            42: 'https://raw.githubusercontent.com/its-shashankY/filterImage/refs/heads/master/Untitled%20(20).png',
+            46: 'https://raw.githubusercontent.com/its-shashankY/filterImage/refs/heads/master/Untitled%20(21).png',
+            43: 'https://raw.githubusercontent.com/its-shashankY/filterImage/refs/heads/master/Untitled%20(18).png',
+            44: 'https://raw.githubusercontent.com/its-shashankY/filterImage/refs/heads/master/Remove%20background%20project%20(11).png'
+        };
+
+        const playerConfig = {
+           spritesheets: {
+            front: 'https://raw.githubusercontent.com/its-shashankY/file_Images/refs/heads/main/Samurai/samurai_up.png',
+            back: 'https://raw.githubusercontent.com/its-shashankY/file_Images/refs/heads/main/Samurai/samurai_back.png',
+            right: 'https://raw.githubusercontent.com/its-shashankY/file_Images/refs/heads/main/Samurai/samurai_right.png',
+            fight: 'https://raw.githubusercontent.com/its-shashankY/file_Images/refs/heads/main/Samurai/samurai_fight.png'
+        },
+          frameWidth: 1920,
+            frameHeight: 1080,
+            layouts: {
+                front: { columns: 5, rows: 4, totalFrames: 20 },
+                back: { columns: 5, rows: 4, totalFrames: 20 },
+                right: { columns: 5, rows: 4, totalFrames: 20 },
+                fight: { columns: 5, rows: 12, totalFrames: 60 }
+            },
+            animationSpeed: 0.5,
+            scale: 0.4,
+            startPosition: { x: 8, y: 8 },
+            moveSpeed: 2,
+            directions: {
+                down: { spritesheet: 'front', frames: [0, 20] },
+                right: { spritesheet: 'right', frames: [0, 20] },
+                up: { spritesheet: 'back', frames: [0, 20] },
+                left: { spritesheet: 'back', frames: [0, 20] },
+                fight: { spritesheet: 'fight', frames: [0, 59], speed: 1 }
+            },
+            currentDirection: 'down'
+        };
+
+        const boarConfig = {
+            spritesheets: {
+                front: 'https://raw.githubusercontent.com/its-shashankY/file_Images/refs/heads/main/Boar/boar_up.png',
+                back: 'https://raw.githubusercontent.com/its-shashankY/file_Images/refs/heads/main/Boar/boar_down.png',
+                left: 'https://raw.githubusercontent.com/its-shashankY/file_Images/refs/heads/main/Boar/boar_left.png',
+            },
+            frameWidth: 1920,
+            frameHeight: 1080,
+            layouts: {
+                front: { columns: 5, rows: 4, totalFrames: 20 },
+                back: { columns: 5, rows: 4, totalFrames: 20 },
+                left: { columns: 5, rows: 4, totalFrames: 20 },
+            },
+            animationSpeed: 0.3,
+            scale: 0.4,
+            startPosition: { x: 12, y: 12 },
+            moveSpeed: 1,
+            territory: {
+                radius: 5,
+                detectionRange: 3,
+                followSpeed: 1.2
+            },
+            directions: {
+                down: { spritesheet: 'front', frames: [0, 20] },
+                right: { spritesheet: 'left', frames: [0, 20] },
+                up: { spritesheet: 'back', frames: [0, 20] },
+                left: { spritesheet: 'left', frames: [0, 20] },
+            }
+        };
+
+
+        const catConfig = {
+    spritesheets: {
+        front: 'https://raw.githubusercontent.com/its-shashankY/file_Images/refs/heads/main/Cat/cat_down.png',
+        back: 'https://raw.githubusercontent.com/its-shashankY/file_Images/refs/heads/main/Cat/cat_up.png',
+        right: 'https://raw.githubusercontent.com/its-shashankY/file_Images/refs/heads/main/Cat/cat_right.png',
+    },
+    frameWidth: 1920,
+    frameHeight: 1080,
+    layouts: {
+        front: { columns: 5, rows: 4, totalFrames: 20 },
+        back: { columns: 5, rows: 4, totalFrames: 20 },
+        right: { columns: 5, rows: 4, totalFrames: 20 },
+    },
+    animationSpeed: 0.3,
+    scale: 0.4,
+    startPosition: { x: 6, y: 6 },
+    moveSpeed: 1,
+    territory: {
+        radius: 5,
+        detectionRange: 3,
+        followSpeed: 1.2
+    },
+    directions: {
+        down: { spritesheet: 'front', frames: [0, 20] },
+        right: { spritesheet: 'right', frames: [0, 20] },
+        up: { spritesheet: 'back', frames: [0, 20] },
+        left: { spritesheet: 'right', frames: [0, 20] }, // Use right and flip for left
+    }
+};
+
+
+const foxConfig = {
+    spritesheets: {
+        front: 'https://raw.githubusercontent.com/its-shashankY/file_Images/refs/heads/main/Fox/fox_down.png',
+        back: 'https://raw.githubusercontent.com/its-shashankY/file_Images/refs/heads/main/Fox/Fox_up.png',
+        right: 'https://raw.githubusercontent.com/its-shashankY/file_Images/refs/heads/main/Fox/fox_right.png'
+    },
+    frameWidth: 1920,
+    frameHeight: 1080,
+    layouts: {
+        front: { columns: 5, rows: 4, totalFrames: 20 },
+        back: { columns: 5, rows: 4, totalFrames: 20 },
+        right: { columns: 5, rows: 4, totalFrames: 20 }
+    },
+    animationSpeed: 0.3,
+    scale: 0.4,
+    startPosition: { x: 10, y: 10 },
+    moveSpeed: 1,
+    territory: {
+        radius: 5,
+        detectionRange: 3,
+        followSpeed: 1.2
+    },
+    directions: {
+        down: { spritesheet: 'front', frames: [0, 20] },
+        right: { spritesheet: 'right', frames: [0, 20] },
+        up: { spritesheet: 'back', frames: [0, 20] },
+        left: { spritesheet: 'right', frames: [0, 20] } // Use right and flip for left
+    }
+};
+
+
+const monkConfig = {
+    spritesheets: {
+        front: 'https://raw.githubusercontent.com/its-shashankY/file_Images/refs/heads/main/Monk/monk_down.png',
+        back: 'https://raw.githubusercontent.com/its-shashankY/file_Images/refs/heads/main/Monk/monk_up.png',
+        right: 'https://raw.githubusercontent.com/its-shashankY/file_Images/refs/heads/main/Monk/monk_right.png'
+    },
+    frameWidth: 1920,
+    frameHeight: 1080,
+    layouts: {
+        front: { columns: 5, rows: 4, totalFrames: 20 },
+        back: { columns: 5, rows: 4, totalFrames: 20 },
+        right: { columns: 5, rows: 4, totalFrames: 20 }
+    },
+    animationSpeed: 0.3,
+    scale: 0.4,
+    startPosition: { x: 14, y: 14 },
+    moveSpeed: 1,
+    territory: {
+        radius: 5,
+        detectionRange: 3,
+        followSpeed: 1.2
+    },
+    directions: {
+        down: { spritesheet: 'front', frames: [0, 20] },
+        right: { spritesheet: 'right', frames: [0, 20] },
+        up: { spritesheet: 'back', frames: [0, 20] },
+        left: { spritesheet: 'right', frames: [0, 20] } // Use right and flip for left
+    }
+};
+
+        // Layer data
+           // Layer data (unchanged)
+       
+        // Layer data (unchanged)
+        const groundLayerData = [6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6];
+
+          const homeLayerData = [
+  38, 0, 0, 46, 0,
+  0, 42, 0, 0, 0, 0, 0, 0, 0, 42, 0,     // 1
+  0, 0, 0, 0, 0,
+   0, 0, 0, 0, 0, 0, 18, 0, 0, 0, 0,  
+      // 2
+  0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  
+  0, 0, 0, 0, 0, 0, 43, 0, 33, 0, 0,     // 4
+  0, 0, 0, 0, 29, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,     // 5
+  0, 0, 44, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      // 6
+  0, 0, 0, 0, 13, 0,
+  0, 0, 0, 0, 0, 23, 0, 0, 0, 0,
+       // 7
+  0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 20, 0, 90, 14, 0,     // 8
+  
+  0, 90, 0, 0, 17, 10, 
+  0, 0, 28, 0, 27, 0, 0, 0, 0, 0,  
+     // 9
+  0, 0, 0, 0, 0, 23,
+  0, 0, 0, 0, 0, 0, 24, 0, 0, 0, 
+      // 10
+  0, 0, 23, 0, 
+  0, 0, 0, 0, 0, 0, 0, 30, 0, 0, 3,         // 11 (short group)
+  
+  0, 0, 34, 0, 0,   
+  13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  
+  0, 0, 0,
+  0, 0, 0, 0, 0, 0, 90, 0, 0, 0, 0,       // 13
+
+  0, 0, 0, 0, 0,
+  9, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 22,
+  
+  0, 0,0, 0, 0, 0, 0, 0, 90, 0, 0, 0,       // 15
+  26, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,       // 16
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0        // 17
+];
+
+        // Create containers for layers
+        const mapContainer = new PIXI.Container();
+        const groundLayer = new PIXI.Container();
+        const homeLayer = new PIXI.Container();
+        const playerLayer = new PIXI.Container();
+        
+        mapContainer.addChild(groundLayer);
+        mapContainer.addChild(playerLayer);
+        mapContainer.addChild(homeLayer);
+        app.stage.addChild(mapContainer);
+        
+        mapContainer.x = app.screen.width / 2;
+        mapContainer.y = app.screen.height / 4;
+
+        // Setup panning
+        let isDragging = false;
+        let prevX, prevY;
+        
+        // Load resources
+        const loader = PIXI.Assets;
+        const textures = {};
+        let player;
+        let playerSpritesheetTextures = { front: null, back: null, right: null, fight: null };
+        let playerFrames = { front: [], back: [], right: [], fight: [] };
+
+        // Player movement
+        const keys = {};
+        let playerGridPosition = { x: playerConfig.startPosition.x, y: playerConfig.startPosition.y };
+        let isMoving = false;
+        let lastDirection = playerConfig.currentDirection;
+
+        // Boar variables
+        let boar;
+        let boarSpritesheetTextures = { front: null, back: null, left: null };
+        let boarFrames = { front: [], back: [], left: [] };
+        let boarGridPosition = { x: boarConfig.startPosition.x, y: boarConfig.startPosition.y };
+        let boarDirection = 'down';
+        let boarState = 'patrol';
+        let boarLastAnimDirection = 'down';
+        let boarOriginalPosition = { x: boarConfig.startPosition.x, y: boarConfig.startPosition.y };
+        
+
+        let cat;
+        let catSpritesheetTextures = { front: null, back: null, right: null };
+        let catFrames = { front: [], back: [], right: [] };
+        let catGridPosition = { x: catConfig.startPosition.x, y: catConfig.startPosition.y };
+        let catDirection = 'down';
+        let catState = 'patrol';
+        let catLastAnimDirection = 'down';
+        let catOriginalPosition = { x: catConfig.startPosition.x, y: catConfig.startPosition.y };
+
+
+        let fox;
+        let foxSpritesheetTextures = { front: null, back: null, right: null };
+        let foxFrames = { front: [], back: [], right: [] };
+        let foxGridPosition = { x: foxConfig.startPosition.x, y: foxConfig.startPosition.y };
+        let foxDirection = 'down';
+        let foxState = 'patrol';
+        let foxLastAnimDirection = 'down';
+        let foxOriginalPosition = { x: foxConfig.startPosition.x, y: foxConfig.startPosition.y };
+        // Load textures
+
+
+
+        let monk;
+        let monkSpritesheetTextures = { front: null, back: null, right: null };
+        let monkFrames = { front: [], back: [], right: [] };
+        let monkGridPosition = { x: monkConfig.startPosition.x, y: monkConfig.startPosition.y };
+        let monkDirection = 'down';
+        let monkState = 'patrol';
+        let monkLastAnimDirection = 'down';
+        let monkOriginalPosition = { x: monkConfig.startPosition.x, y: monkConfig.startPosition.y };
+
+
+        const texturePromises = [];
+        
+        for (const [tileId, url] of Object.entries(tileTextures)) {
+            texturePromises.push(
+                loader.load(url).then(texture => {
+                    textures[tileId] = texture;
+                })
+            );
+        }
+        
+        // Load player spritesheets
+        for (const [type, url] of Object.entries(playerConfig.spritesheets)) {
+            texturePromises.push(
+                loader.load(url).then(texture => {
+                    playerSpritesheetTextures[type] = texture;
+                    console.log(`Player ${type} spritesheet loaded:`, texture.width, 'x', texture.height);
+                })
+            );
+        }
+        
+        // Load boar spritesheets
+        for (const [type, url] of Object.entries(boarConfig.spritesheets)) {
+            texturePromises.push(
+                loader.load(url).then(texture => {
+                    boarSpritesheetTextures[type] = texture;
+                    console.log(`Boar ${type} spritesheet loaded:`, texture.width, 'x', texture.height);
+                })
+            );
+        }
+
+        // Load cat spritesheets
+        for (const [type, url] of Object.entries(catConfig.spritesheets)) {
+            texturePromises.push(
+                loader.load(url).then(texture => {
+                    catSpritesheetTextures[type] = texture;
+                    console.log(`Cat ${type} spritesheet loaded:`, texture.width, 'x', texture.height);
+                })
+            );
+        }
+
+
+        for (const [type, url] of Object.entries(monkConfig.spritesheets)) {
+    texturePromises.push(
+        loader.load(url).then(texture => {
+            monkSpritesheetTextures[type] = texture;
+            console.log(`Monk ${type} spritesheet loaded:`, texture.width, 'x', texture.height);
+        })
+    );
+}
+
+
+        for (const [type, url] of Object.entries(foxConfig.spritesheets)) {
+            texturePromises.push(
+                loader.load(url).then(texture => {
+                    foxSpritesheetTextures[type] = texture;
+                    console.log(`Fox ${type} spritesheet loaded:`, texture.width, 'x', texture.height);
+                })
+            );
+        }
+
+
+        function debugBoarPosition() {
+            const boarDebugText = new PIXI.Text('Boar Debug Info', {
+                fontFamily: 'Arial',
+                fontSize: 14,
+                fill: 0xFF0000,
+                align: 'left'
+            });
+            boarDebugText.position.set(10, 100);
+            app.stage.addChild(boarDebugText);
+
+            app.ticker.add(() => {
+                if (boar && player) {
+                    const dx = playerGridPosition.x - boarGridPosition.x;
+                    const dy = playerGridPosition.y - boarGridPosition.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    const debug = [
+                        `Boar Position: (${Math.round(boarGridPosition.x * 10) / 10}, ${Math.round(boarGridPosition.y * 10) / 10})`,
+                        `Player Position: (${Math.round(playerGridPosition.x * 10) / 10}, ${Math.round(playerGridPosition.y * 10) / 10})`,
+                        `Distance: ${Math.round(distance * 10) / 10}`,
+                        `Boar State: ${boarState}`,
+                        `Boar Direction: ${boarDirection}`,
+                        `Detection Range: ${boarConfig.territory.detectionRange}`,
+                        `Territory Radius: ${boarConfig.territory.radius}`
+                    ];
+                    boarDebugText.text = debug.join('\n');
+                }
+            });
+        }
+
+        function debugPlayerAnimation() {
+            const debugText = new PIXI.Text('Player Debug Info', {
+                fontFamily: 'Arial',
+                fontSize: 14,
+                fill: 0xffffff,
+                align: 'left'
+            });
+            debugText.position.set(10, 10);
+            app.stage.addChild(debugText);
+
+            app.ticker.add(() => {
+                const debug = [
+                    `Animation Playing: ${player ? player.playing : 'No player'}`,
+                    `Current Direction: ${lastDirection}`,
+                    `Is Moving: ${isMoving}`,
+                    `Position: (${Math.round(playerGridPosition.x)}, ${Math.round(playerGridPosition.y)})`,
+                    `Frame: ${player ? player.currentFrame : 'N/A'}/${player ? player.totalFrames : 'N/A'}`,
+                    `Front Frames: ${playerFrames.front.length}`,
+                    `Back Frames: ${playerFrames.back.length}`,
+                    `Scale: ${player ? player.scale.x : 'N/A'}`
+                ];
+                debugText.text = debug.join('\n');
+            });
+
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'T' || e.key === 't') {
+                    if (player.playing) {
+                        player.stop();
+                        console.log('Animation stopped');
+                    } else {
+                        player.play();
+                        console.log('Animation started');
+                    }
+                }
+            });
+        }
+
+        function gameLoop(delta) {
+    handlePlayerMovement(delta);
+    updateBoar(delta);
+    updateCat(delta);
+    updateFox(delta);
+    updateMonk(delta); // Add this line
+}
+Promise.all(texturePromises).then(() => {
+    createMap();
+    createPlayerFrames();
+    createPlayer();
+    createBoarFrames();
+    createBoar();
+    createCatFrames();
+    createCat();
+    createFoxFrames();
+    createFox();
+    createMonkFrames();
+    createMonk();
+    debugPlayerAnimation();
+    debugBoarPosition();
+    setupInteraction();
+    setupKeyboardControls();
+    app.ticker.add(gameLoop);
+}).catch(error => {
+    console.error('Error in initialization:', error);
+});
+
+        function createMap() {
+            for (let y = 0; y < mapData.height; y++) {
+                for (let x = 0; x < mapData.width; x++) {
+                    const index = y * mapData.width + x;
+                    const tileId = groundLayerData[index];
+                    
+                    if (tileId !== 0 && textures[tileId]) {
+                        const sprite = new PIXI.Sprite(textures[tileId]);
+                        const isoX = (x - y) * (mapData.tileWidth / 2);
+                        const isoY = (x + y) * (mapData.tileHeight / 2);
+                        sprite.x = isoX;
+                        sprite.y = isoY;
+                        sprite.anchor.set(0.5, 1);
+                        groundLayer.addChild(sprite);
+                    }
+                }
+            }
+            
+            for (let y = 0; y < mapData.height; y++) {
+                for (let x = 0; x < mapData.width; x++) {
+                    const index = y * mapData.width + x;
+                    const tileId = homeLayerData[index];
+                    
+                    if (tileId !== 0 && textures[tileId]) {
+                        const sprite = new PIXI.Sprite(textures[tileId]);
+                        const isoX = (x - y) * (mapData.tileWidth / 2);
+                        const isoY = (x + y) * (mapData.tileHeight / 2);
+                        sprite.x = isoX;
+                        sprite.y = isoY;
+                        sprite.anchor.set(0.5, 1);
+                        homeLayer.addChild(sprite);
+                    }
+                }
+            }
+        }
+
+        function createPlayerFrames() {
+            try {
+                for (const sheetType of ['front', 'back', 'right', 'fight']) {
+                    playerFrames[sheetType] = [];
+                    const baseTexture = playerSpritesheetTextures[sheetType].baseTexture;
+                    const layout = playerConfig.layouts[sheetType];
+                    
+                    console.log(`Creating frames for ${sheetType}:`, layout);
+
+                    for (let row = 0; row < layout.rows; row++) {
+                        for (let col = 0; col < layout.columns; col++) {
+                            const frameIndex = row * layout.columns + col;
+                            if (frameIndex >= layout.totalFrames) break;
+
+                            const x = col * playerConfig.frameWidth;
+                            const y = row * playerConfig.frameHeight;
+
+                            const frameTexture = new PIXI.Texture(
+                                baseTexture,
+                                new PIXI.Rectangle(x, y, playerConfig.frameWidth, playerConfig.frameHeight)
+                            );
+                            playerFrames[sheetType].push(frameTexture);
+                        }
+                    }
+                    
+                    console.log(`Created ${playerFrames[sheetType].length} frames for ${sheetType}`);
+                }
+            } catch (error) {
+                console.error('Error in createPlayerFrames:', error);
+            }
+        }
+
+       
+        function createBoarFrames() {
+            try {
+                for (const sheetType of ['front', 'back', 'left']) {
+                    boarFrames[sheetType] = [];
+                    const baseTexture = boarSpritesheetTextures[sheetType].baseTexture;
+                    const layout = boarConfig.layouts[sheetType];
+
+                    for (let row = 0; row < layout.rows; row++) {
+                        for (let col = 0; col < layout.columns; col++) {
+                            const frameIndex = row * layout.columns + col;
+                            if (frameIndex >= layout.totalFrames) break;
+
+                            const x = col * boarConfig.frameWidth;
+                            const y = row * boarConfig.frameHeight;
+
+                            const frameTexture = new PIXI.Texture(
+                                baseTexture,
+                                new PIXI.Rectangle(x, y, boarConfig.frameWidth, boarConfig.frameHeight)
+                            );
+                            boarFrames[sheetType].push(frameTexture);
+                        }
+                    }
+                    
+                    console.log(`Created ${boarFrames[sheetType].length} frames for boar ${sheetType}`);
+                }
+            } catch (error) {
+                console.error('Error creating boar frames:', error);
+            }
+        }
+
+        function createCatFrames() {
+            try {
+                for (const sheetType of ['front', 'back', 'right']) {
+                    catFrames[sheetType] = [];
+                    const baseTexture = catSpritesheetTextures[sheetType].baseTexture;
+                    const layout = catConfig.layouts[sheetType];
+
+                    for (let row = 0; row < layout.rows; row++) {
+                        for (let col = 0; col < layout.columns; col++) {
+                            const frameIndex = row * layout.columns + col;
+                            if (frameIndex >= layout.totalFrames) break;
+
+                            const x = col * catConfig.frameWidth;
+                            const y = row * catConfig.frameHeight;
+
+                            const frameTexture = new PIXI.Texture(
+                                baseTexture,
+                                new PIXI.Rectangle(x, y, catConfig.frameWidth, catConfig.frameHeight)
+                            );
+                            catFrames[sheetType].push(frameTexture);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error creating cat frames:', error);
+            }
+        }
+
+        function createFoxFrames() {
+    try {
+        for (const sheetType of ['front', 'back', 'right']) {
+            foxFrames[sheetType] = [];
+            const baseTexture = foxSpritesheetTextures[sheetType].baseTexture;
+            const layout = foxConfig.layouts[sheetType];
+
+            for (let row = 0; row < layout.rows; row++) {
+                for (let col = 0; col < layout.columns; col++) {
+                    const frameIndex = row * layout.columns + col;
+                    if (frameIndex >= layout.totalFrames) break;
+
+                    const x = col * foxConfig.frameWidth;
+                    const y = row * foxConfig.frameHeight;
+
+                    const frameTexture = new PIXI.Texture(
+                        baseTexture,
+                        new PIXI.Rectangle(x, y, foxConfig.frameWidth, foxConfig.frameHeight)
+                    );
+                    foxFrames[sheetType].push(frameTexture);
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error creating fox frames:', error);
+    }
+}
+
+
+function createMonkFrames() {
+    try {
+        for (const sheetType of ['front', 'back', 'right']) {
+            monkFrames[sheetType] = [];
+            const baseTexture = monkSpritesheetTextures[sheetType].baseTexture;
+            const layout = monkConfig.layouts[sheetType];
+
+            for (let row = 0; row < layout.rows; row++) {
+                for (let col = 0; col < layout.columns; col++) {
+                    const frameIndex = row * layout.columns + col;
+                    if (frameIndex >= layout.totalFrames) break;
+
+                    const x = col * monkConfig.frameWidth;
+                    const y = row * monkConfig.frameHeight;
+
+                    const frameTexture = new PIXI.Texture(
+                        baseTexture,
+                        new PIXI.Rectangle(x, y, monkConfig.frameWidth, monkConfig.frameHeight)
+                    );
+                    monkFrames[sheetType].push(frameTexture);
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error creating monk frames:', error);
+    }
+}
+
+        function createBoar() {
+            try {
+                const directionFrames = getBoarDirectionFrames(boarDirection);
+                boar = new PIXI.AnimatedSprite(directionFrames);
+                boar.anchor.set(0.5, 1);
+                boar.scale.set(boarConfig.scale);
+                boar.animationSpeed = boarConfig.animationSpeed;
+                
+                boarGridPosition = {
+                    x: boarConfig.startPosition.x,
+                    y: boarConfig.startPosition.y
+                };
+                
+                const territory = new PIXI.Graphics();
+                territory.lineStyle(2, 0xFF0000, 0.2);
+                territory.drawCircle(0, 0, boarConfig.territory.radius * 50);
+                territory.lineStyle(2, 0x00FF00, 0.3);
+                territory.drawCircle(0, 0, boarConfig.territory.detectionRange * 50);
+                boar.addChild(territory);
+                
+                boar.play();
+                updateBoarPosition();
+                playerLayer.addChild(boar);
+                
+                console.log('Boar created at:', boarGridPosition);
+            } catch (error) {
+                console.error('Error creating boar:', error);
+            }
+        }
+
+        function createFox() {
+    try {
+        const directionFrames = getFoxDirectionFrames(foxDirection);
+        fox = new PIXI.AnimatedSprite(directionFrames);
+        fox.anchor.set(0.5, 1);
+        fox.scale.set(foxConfig.scale);
+        fox.animationSpeed = foxConfig.animationSpeed;
+
+        foxGridPosition = {
+            x: foxConfig.startPosition.x,
+            y: foxConfig.startPosition.y
+        };
+
+        // Optional: Add territory visualization
+        const territory = new PIXI.Graphics();
+        territory.lineStyle(2, 0xFFA500, 0.2);
+        territory.drawCircle(0, 0, foxConfig.territory.radius * 50);
+        fox.addChild(territory);
+
+        fox.play();
+        updateFoxPosition();
+        playerLayer.addChild(fox);
+
+        console.log('Fox created at:', foxGridPosition);
+    } catch (error) {
+        console.error('Error creating fox:', error);
+    }
+}
+
+        function getBoarDirectionFrames(direction) {
+            const dirConfig = boarConfig.directions[direction] || boarConfig.directions.down;
+            const { spritesheet, frames } = dirConfig;
+            return boarFrames[spritesheet].slice(frames[0], frames[1] + 1); // Include end frame
+        }
+
+        function getFoxDirectionFrames(direction) {
+    const dirConfig = foxConfig.directions[direction] || foxConfig.directions.down;
+    const { spritesheet, frames } = dirConfig;
+    return foxFrames[spritesheet].slice(frames[0], frames[1]);
+}
+
+
+
+        function createCat() {
+                try {
+                    const directionFrames = getCatDirectionFrames(catDirection);
+                    cat = new PIXI.AnimatedSprite(directionFrames);
+                    cat.anchor.set(0.5, 1);
+                    cat.scale.set(catConfig.scale);
+                    cat.animationSpeed = catConfig.animationSpeed;
+
+                    catGridPosition = {
+                        x: catConfig.startPosition.x,
+                        y: catConfig.startPosition.y
+                    };
+
+                    // Optional: Add territory visualization
+                    const territory = new PIXI.Graphics();
+                    territory.lineStyle(2, 0x00FF00, 0.2);
+                    territory.drawCircle(0, 0, catConfig.territory.radius * 50);
+                    cat.addChild(territory);
+
+                    cat.play();
+                    updateCatPosition();
+                    playerLayer.addChild(cat);
+
+                    console.log('Cat created at:', catGridPosition);
+                } catch (error) {
+                    console.error('Error creating cat:', error);
+                }
+            }
+
+
+            function createMonk() {
+    try {
+        const directionFrames = getMonkDirectionFrames(monkDirection);
+        monk = new PIXI.AnimatedSprite(directionFrames);
+        monk.anchor.set(0.5, 1);
+        monk.scale.set(monkConfig.scale);
+        monk.animationSpeed = monkConfig.animationSpeed;
+
+        monkGridPosition = {
+            x: monkConfig.startPosition.x,
+            y: monkConfig.startPosition.y
+        };
+
+        // Optional: Add territory visualization
+        const territory = new PIXI.Graphics();
+        territory.lineStyle(2, 0xFFFF00, 0.2);
+        territory.drawCircle(0, 0, monkConfig.territory.radius * 50);
+        monk.addChild(territory);
+
+        monk.play();
+        updateMonkPosition();
+        playerLayer.addChild(monk);
+
+        console.log('Monk created at:', monkGridPosition);
+    } catch (error) {
+        console.error('Error creating monk:', error);
+    }
+}
+
+
+            function getCatDirectionFrames(direction) {
+                const dirConfig = catConfig.directions[direction] || catConfig.directions.down;
+                const { spritesheet, frames } = dirConfig;
+                return catFrames[spritesheet].slice(frames[0], frames[1]);
+            }
+
+
+            function getMonkDirectionFrames(direction) {
+    const dirConfig = monkConfig.directions[direction] || monkConfig.directions.down;
+    const { spritesheet, frames } = dirConfig;
+    return monkFrames[spritesheet].slice(frames[0], frames[1]);
+}
+
+        function createPlayer() {
+            const directionFrames = getDirectionFrames(playerConfig.currentDirection);
+            player = new PIXI.AnimatedSprite(directionFrames);
+            player.anchor.set(0.5, 1);
+            player.scale.set(playerConfig.scale);
+            player.animationSpeed = playerConfig.animationSpeed;
+            player.play();
+            updatePlayerPosition();
+            playerLayer.addChild(player);
+        }
+
+        function centerCameraOnPlayer() {
+            if (!player) return;
+            const screenCenterX = app.screen.width / 2;
+            const screenCenterY = app.screen.height / 2;
+            mapContainer.x = screenCenterX - player.x * mapContainer.scale.x;
+            mapContainer.y = screenCenterY - player.y * mapContainer.scale.y;
+        }
+
+        function getDirectionFrames(direction) {
+            const dirConfig = playerConfig.directions[direction];
+            if (!dirConfig) return playerFrames.front.slice(0, 4);
+            const { spritesheet, frames } = dirConfig;
+            return playerFrames[spritesheet].slice(frames[0], frames[1]);
+        }
+
+        function updatePlayerAnimation(direction) {
+            if (direction !== lastDirection) {
+                const directionFrames = getDirectionFrames(direction);
+                player.textures = directionFrames;
+                player.gotoAndPlay(0);
+                lastDirection = direction;
+            }
+            
+            if (isMoving && !player.playing) {
+                player.play();
+            } else if (!isMoving && player.playing) {
+                player.stop();
+                player.gotoAndStop(0);
+            }
+        }
+
+        function updatePlayerPosition() {
+            const isoX = (playerGridPosition.x - playerGridPosition.y) * (mapData.tileWidth / 4);
+            const isoY = (playerGridPosition.x + playerGridPosition.y) * (mapData.tileHeight / 2);
+            player.x = isoX;
+            player.y = isoY;
+
+            if (lastDirection === 'left') {
+                player.scale.x = -playerConfig.scale;
+                player.anchor.x = 0.5;
+            } else if (lastDirection === 'right') {
+                player.scale.x = playerConfig.scale;
+                player.anchor.x = 0.5;
+            }
+        }
+
+        function updateBoarPosition() {
+            const isoX = (boarGridPosition.x - boarGridPosition.y) * (mapData.tileWidth / 4);
+            const isoY = (boarGridPosition.x + boarGridPosition.y) * (mapData.tileHeight / 2);
+            boar.x = isoX;
+            boar.y = isoY;
+
+            // if (boarDirection === 'left') {
+            //     boar.scale.x = -boarConfig.scale; // Flip sprite for left
+            //     boar.anchor.x = 0.5;
+            // } else if (boarDirection === 'right') {
+            //     boar.scale.x = boarConfig.scale; // Normal scale for right
+            //     boar.anchor.x = 0.5;
+            // }
+        }
+
+       function updateBoarAnimation(direction) {
+            // Only update animation frames if direction changed
+            if (direction !== boarLastAnimDirection) {
+                const directionFrames = getBoarDirectionFrames(direction);
+                boar.textures = directionFrames;
+                boar.gotoAndPlay(0);
+                boarLastAnimDirection = direction;
+            }
+
+            // Only animate when following or patrolling (moving)
+            const isBoarMoving = boarState === 'follow' || boarState === 'patrol';
+            if (isBoarMoving && !boar.playing) {
+                boar.play();
+            } else if (!isBoarMoving && boar.playing) {
+                boar.stop();
+                boar.gotoAndStop(0);
+            }
+        }
+
+        function updateMonkPosition() {
+    const isoX = (monkGridPosition.x - monkGridPosition.y) * (mapData.tileWidth / 4);
+    const isoY = (monkGridPosition.x + monkGridPosition.y) * (mapData.tileHeight / 2);
+    monk.x = isoX;
+    monk.y = isoY;
+
+    // Flip for left
+    if (monkDirection === 'left') {
+        monk.scale.x = -Math.abs(monkConfig.scale);
+    } else {
+        monk.scale.x = Math.abs(monkConfig.scale);
+    }
+}
+
+function updateMonkAnimation(direction) {
+    if (direction !== monkLastAnimDirection) {
+        const directionFrames = getMonkDirectionFrames(direction);
+        monk.textures = directionFrames;
+        monk.gotoAndPlay(0);
+        monkLastAnimDirection = direction;
+    }
+
+    const isMonkMoving = monkState === 'follow' || monkState === 'patrol';
+    if (isMonkMoving && !monk.playing) {
+        monk.play();
+    } else if (!isMonkMoving && monk.playing) {
+        monk.stop();
+        monk.gotoAndStop(0);
+    }
+}
+
+      function updateBoar(delta) {
+    if (!boar || !player) return;
+
+    const dx = playerGridPosition.x - boarGridPosition.x;
+    const dy = playerGridPosition.y - boarGridPosition.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance <= boarConfig.territory.detectionRange) {
+        boarState = 'follow';
+        const angle = Math.atan2(dy, dx);
+        const speed = boarConfig.territory.followSpeed * delta / 60;
+        boarGridPosition.x += Math.cos(angle) * speed;
+        boarGridPosition.y += Math.sin(angle) * speed;
+
+        if (Math.abs(dx) > Math.abs(dy)) {
+            boarDirection = dx > 0 ? 'right' : 'left';
+        } else {
+            boarDirection = dy > 0 ? 'down' : 'up';
+        }
+    } else {
+        // Patrol: return to original position
+        const dxToOrigin = boarOriginalPosition.x - boarGridPosition.x;
+        const dyToOrigin = boarOriginalPosition.y - boarGridPosition.y;
+        const distanceToOrigin = Math.sqrt(dxToOrigin * dxToOrigin + dyToOrigin * dyToOrigin);
+
+        if (distanceToOrigin > 0.1) {
+            boarState = 'patrol';
+            const angle = Math.atan2(dyToOrigin, dxToOrigin);
+            const speed = boarConfig.moveSpeed * delta / 60;
+            boarGridPosition.x += Math.cos(angle) * speed;
+            boarGridPosition.y += Math.sin(angle) * speed;
+
+            if (Math.abs(dxToOrigin) > Math.abs(dyToOrigin)) {
+                boarDirection = dxToOrigin > 0 ? 'right' : 'left';
+            } else {
+                boarDirection = dyToOrigin > 0 ? 'down' : 'up';
+            }
+        } else {
+            // Arrived at original position, idle
+            boarState = 'idle';
+        }
+    }
+
+    // Keep boar within map bounds
+    boarGridPosition.x = Math.max(0, Math.min(mapData.width - 1, boarGridPosition.x));
+    boarGridPosition.y = Math.max(0, Math.min(mapData.height - 1, boarGridPosition.y));
+
+    updateBoarPosition();
+    updateBoarAnimation(boarDirection);
+}
+
+
+
+
+function updateCatPosition() {
+    const isoX = (catGridPosition.x - catGridPosition.y) * (mapData.tileWidth / 4);
+    const isoY = (catGridPosition.x + catGridPosition.y) * (mapData.tileHeight / 2);
+    cat.x = isoX;
+    cat.y = isoY;
+
+    // Flip for left
+    if (catDirection === 'left') {
+        cat.scale.x = -Math.abs(catConfig.scale);
+    } else {
+        cat.scale.x = Math.abs(catConfig.scale);
+    }
+}
+
+function updateCatAnimation(direction) {
+    if (direction !== catLastAnimDirection) {
+        const directionFrames = getCatDirectionFrames(direction);
+        cat.textures = directionFrames;
+        cat.gotoAndPlay(0);
+        catLastAnimDirection = direction;
+    }
+
+    const isCatMoving = catState === 'follow' || catState === 'patrol';
+    if (isCatMoving && !cat.playing) {
+        cat.play();
+    } else if (!isCatMoving && cat.playing) {
+        cat.stop();
+        cat.gotoAndStop(0);
+    }
+}
+
+
+
+
+
+function updateCat(delta) {
+    if (!cat || !player) return;
+
+    const dx = playerGridPosition.x - catGridPosition.x;
+    const dy = playerGridPosition.y - catGridPosition.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance <= catConfig.territory.detectionRange) {
+        catState = 'follow';
+        const angle = Math.atan2(dy, dx);
+        const speed = catConfig.territory.followSpeed * delta / 60;
+        catGridPosition.x += Math.cos(angle) * speed;
+        catGridPosition.y += Math.sin(angle) * speed;
+
+        if (Math.abs(dx) > Math.abs(dy)) {
+            catDirection = dx > 0 ? 'right' : 'left';
+        } else {
+            catDirection = dy > 0 ? 'down' : 'up';
+        }
+    } else {
+        // Patrol: return to original position
+        const dxToOrigin = catOriginalPosition.x - catGridPosition.x;
+        const dyToOrigin = catOriginalPosition.y - catGridPosition.y;
+        const distanceToOrigin = Math.sqrt(dxToOrigin * dxToOrigin + dyToOrigin * dyToOrigin);
+
+        if (distanceToOrigin > 0.1) {
+            catState = 'patrol';
+            const angle = Math.atan2(dyToOrigin, dxToOrigin);
+            const speed = catConfig.moveSpeed * delta / 60;
+            catGridPosition.x += Math.cos(angle) * speed;
+            catGridPosition.y += Math.sin(angle) * speed;
+
+            if (Math.abs(dxToOrigin) > Math.abs(dyToOrigin)) {
+                catDirection = dxToOrigin > 0 ? 'right' : 'left';
+            } else {
+                catDirection = dyToOrigin > 0 ? 'down' : 'up';
+            }
+        } else {
+            catState = 'idle';
+        }
+    }
+
+    // Keep cat within map bounds
+    catGridPosition.x = Math.max(0, Math.min(mapData.width - 1, catGridPosition.x));
+    catGridPosition.y = Math.max(0, Math.min(mapData.height - 1, catGridPosition.y));
+
+    updateCatPosition();
+    updateCatAnimation(catDirection);
+}
+
+
+function updateFoxPosition() {
+    const isoX = (foxGridPosition.x - foxGridPosition.y) * (mapData.tileWidth / 4);
+    const isoY = (foxGridPosition.x + foxGridPosition.y) * (mapData.tileHeight / 2);
+    fox.x = isoX;
+    fox.y = isoY;
+
+    // Flip for left
+    if (foxDirection === 'left') {
+        fox.scale.x = -Math.abs(foxConfig.scale);
+    } else {
+        fox.scale.x = Math.abs(foxConfig.scale);
+    }
+}
+
+function updateFoxAnimation(direction) {
+    if (direction !== foxLastAnimDirection) {
+        const directionFrames = getFoxDirectionFrames(direction);
+        fox.textures = directionFrames;
+        fox.gotoAndPlay(0);
+        foxLastAnimDirection = direction;
+    }
+
+    const isFoxMoving = foxState === 'follow' || foxState === 'patrol';
+    if (isFoxMoving && !fox.playing) {
+        fox.play();
+    } else if (!isFoxMoving && fox.playing) {
+        fox.stop();
+        fox.gotoAndStop(0);
+    }
+}
+
+
+function updateFox(delta) {
+    if (!fox || !player) return;
+
+    const dx = playerGridPosition.x - foxGridPosition.x;
+    const dy = playerGridPosition.y - foxGridPosition.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance <= foxConfig.territory.detectionRange) {
+        foxState = 'follow';
+        const angle = Math.atan2(dy, dx);
+        const speed = foxConfig.territory.followSpeed * delta / 60;
+        foxGridPosition.x += Math.cos(angle) * speed;
+        foxGridPosition.y += Math.sin(angle) * speed;
+
+        if (Math.abs(dx) > Math.abs(dy)) {
+            foxDirection = dx > 0 ? 'right' : 'left';
+        } else {
+            foxDirection = dy > 0 ? 'down' : 'up';
+        }
+    } else {
+        // Patrol: return to original position
+        const dxToOrigin = foxOriginalPosition.x - foxGridPosition.x;
+        const dyToOrigin = foxOriginalPosition.y - foxGridPosition.y;
+        const distanceToOrigin = Math.sqrt(dxToOrigin * dxToOrigin + dyToOrigin * dyToOrigin);
+
+        if (distanceToOrigin > 0.1) {
+            foxState = 'patrol';
+            const angle = Math.atan2(dyToOrigin, dxToOrigin);
+            const speed = foxConfig.moveSpeed * delta / 60;
+            foxGridPosition.x += Math.cos(angle) * speed;
+            foxGridPosition.y += Math.sin(angle) * speed;
+
+            if (Math.abs(dxToOrigin) > Math.abs(dyToOrigin)) {
+                foxDirection = dxToOrigin > 0 ? 'right' : 'left';
+            } else {
+                foxDirection = dyToOrigin > 0 ? 'down' : 'up';
+            }
+        } else {
+            foxState = 'idle';
+        }
+    }
+
+    // Keep fox within map bounds
+    foxGridPosition.x = Math.max(0, Math.min(mapData.width - 1, foxGridPosition.x));
+    foxGridPosition.y = Math.max(0, Math.min(mapData.height - 1, foxGridPosition.y));
+
+    updateFoxPosition();
+    updateFoxAnimation(foxDirection);
+}
+
+
+function updateMonk(delta) {
+    if (!monk || !player) return;
+
+    const dx = playerGridPosition.x - monkGridPosition.x;
+    const dy = playerGridPosition.y - monkGridPosition.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance <= monkConfig.territory.detectionRange) {
+        monkState = 'follow';
+        const angle = Math.atan2(dy, dx);
+        const speed = monkConfig.territory.followSpeed * delta / 60;
+        monkGridPosition.x += Math.cos(angle) * speed;
+        monkGridPosition.y += Math.sin(angle) * speed;
+
+        if (Math.abs(dx) > Math.abs(dy)) {
+            monkDirection = dx > 0 ? 'right' : 'left';
+        } else {
+            monkDirection = dy > 0 ? 'down' : 'up';
+        }
+    } else {
+        // Patrol: return to original position
+        const dxToOrigin = monkOriginalPosition.x - monkGridPosition.x;
+        const dyToOrigin = monkOriginalPosition.y - monkGridPosition.y;
+        const distanceToOrigin = Math.sqrt(dxToOrigin * dxToOrigin + dyToOrigin * dyToOrigin);
+
+        if (distanceToOrigin > 0.1) {
+            monkState = 'patrol';
+            const angle = Math.atan2(dyToOrigin, dxToOrigin);
+            const speed = monkConfig.moveSpeed * delta / 60;
+            monkGridPosition.x += Math.cos(angle) * speed;
+            monkGridPosition.y += Math.sin(angle) * speed;
+
+            if (Math.abs(dxToOrigin) > Math.abs(dyToOrigin)) {
+                monkDirection = dxToOrigin > 0 ? 'right' : 'left';
+            } else {
+                monkDirection = dyToOrigin > 0 ? 'down' : 'up';
+            }
+        } else {
+            monkState = 'idle';
+        }
+    }
+
+    // Keep monk within map bounds
+    monkGridPosition.x = Math.max(0, Math.min(mapData.width - 1, monkGridPosition.x));
+    monkGridPosition.y = Math.max(0, Math.min(mapData.height - 1, monkGridPosition.y));
+
+    updateMonkPosition();
+    updateMonkAnimation(monkDirection);
+}
+     
+     function handlePlayerMovement(delta) {
+    let dx = 0;
+    let dy = 0;
+    let direction = lastDirection;
+    const moveSpeed = playerConfig.moveSpeed * delta / 60;
+
+     if (player.fighting) return;
+    // ... rest of movement code 
+
+    // Handle one direction at a time with proper sprite scaling
+   if (keys['ArrowRight'] || keys['d']) {
+        dx = moveSpeed;
+        direction = 'right';
+        player.scale.x = Math.abs(playerConfig.scale); // Normal scale for right
+        player.anchor.x = 0.5;
+    } else if (keys['ArrowLeft'] || keys['a']) {
+        dx = -moveSpeed;
+        direction = 'left';
+        player.scale.x = -Math.abs(playerConfig.scale); // Flip sprite for left
+        player.anchor.x = 0.5;
+    } else if (keys['ArrowUp'] || keys['w']) {
+        dy = -moveSpeed;
+        direction = 'up';
+        player.scale.x = Math.abs(playerConfig.scale); // Reset scale for up
+    } else if (keys['ArrowDown'] || keys['s']) {
+        dy = moveSpeed;
+        direction = 'down';
+        player.scale.x = Math.abs(playerConfig.scale); // Reset scale for down
+    }
+
+    //    if (player.fighting) return;
+
+    isMoving = (dx !== 0 || dy !== 0);
+    
+      if (isMoving && direction !== lastDirection) {
+        const directionFrames = getDirectionFrames(direction);
+        player.textures = directionFrames;
+        player.gotoAndPlay(0);
+        lastDirection = direction;
+    }
+
+
+    if (isMoving) {
+        // Update position
+        playerGridPosition.x += dx;
+        playerGridPosition.y += dy;
+        
+        // Clamp to map bounds
+        playerGridPosition.x = Math.max(0, Math.min(mapData.width * mapData.tileWidth, playerGridPosition.x));
+        playerGridPosition.y = Math.max(0, Math.min(mapData.height * mapData.tileHeight, playerGridPosition.y));
+  
+        
+        updatePlayerPosition();
+        centerCameraOnPlayer();
+    } else if (player.playing) {
+        player.gotoAndStop(0);
+    }
+    
+    updatePlayerAnimation(direction);
+}
+
+        function setupInteraction() {
+            app.stage.eventMode = 'static';
+            app.stage.hitArea = app.screen;
+            app.stage.on('pointerdown', onDragStart);
+            app.stage.on('pointerup', onDragEnd);
+            app.stage.on('pointerupoutside', onDragEnd);
+            app.stage.on('pointermove', onDragMove);
+            window.addEventListener('wheel', onZoom);
+        }
+
+        function setupKeyboardControls() {
+            window.addEventListener('keydown', (e) => {
+                keys[e.key] = true;
+            });
+            window.addEventListener('keyup', (e) => {
+                keys[e.key] = false;
+            });
+        }
+
+        function onDragStart(event) {
+            isDragging = true;
+            const pos = event.data.global;
+            prevX = pos.x;
+            prevY = pos.y;
+        }
+
+        function onDragEnd() {
+            isDragging = false;
+        }
+
+        function onDragMove(event) {
+            if (isDragging) {
+                const pos = event.data.global;
+                mapContainer.x += pos.x - prevX;
+                mapContainer.y += pos.y - prevY;
+                prevX = pos.x;
+                prevY = pos.y;
+            }
+        }
+
+        function onZoom(event) {
+            const scaleSpeed = 0.1;
+            const zoomFactor = event.deltaY > 0 ? 1 - scaleSpeed : 1 + scaleSpeed;
+            mapContainer.scale.x *= zoomFactor;
+            mapContainer.scale.y *= zoomFactor;
+            mapContainer.scale.x = Math.max(0.5, Math.min(2, mapContainer.scale.x));
+            mapContainer.scale.y = Math.max(0.5, Math.min(2, mapContainer.scale.y));
+            centerCameraOnPlayer();
+        }
+    </script>
+</body>
+</html>
