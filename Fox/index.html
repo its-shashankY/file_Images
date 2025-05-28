@@ -137,7 +137,7 @@
                 down: { spritesheet: 'front', frames: [0, 20] },
                 right: { spritesheet: 'left', frames: [0, 20] },
                 up: { spritesheet: 'back', frames: [0, 20] },
-                left: { spritesheet: 'left', frames: [0, 20] },
+                left: { spritesheet: 'back', frames: [0, 20] },
             }
         };
 
@@ -146,14 +146,14 @@
     spritesheets: {
         front: 'https://raw.githubusercontent.com/its-shashankY/file_Images/refs/heads/main/Cat/cat_down.png',
         back: 'https://raw.githubusercontent.com/its-shashankY/file_Images/refs/heads/main/Cat/cat_up.png',
-        right: 'https://raw.githubusercontent.com/its-shashankY/file_Images/refs/heads/main/Cat/cat_right.png',
+        left: 'https://raw.githubusercontent.com/its-shashankY/file_Images/refs/heads/main/Cat/cat_right.png',
     },
     frameWidth: 1920,
     frameHeight: 1080,
     layouts: {
         front: { columns: 5, rows: 4, totalFrames: 20 },
         back: { columns: 5, rows: 4, totalFrames: 20 },
-        right: { columns: 5, rows: 4, totalFrames: 20 },
+        left: { columns: 5, rows: 4, totalFrames: 20 },
     },
     animationSpeed: 0.3,
     scale: 0.4,
@@ -164,12 +164,12 @@
         detectionRange: 3,
         followSpeed: 1.2
     },
-    directions: {
-        down: { spritesheet: 'front', frames: [0, 20] },
-        right: { spritesheet: 'right', frames: [0, 20] },
-        up: { spritesheet: 'back', frames: [0, 20] },
-        left: { spritesheet: 'right', frames: [0, 20] }, // Use right and flip for left
-    }
+   directions: {
+                down: { spritesheet: 'front', frames: [0, 20] },
+                right: { spritesheet: 'left', frames: [0, 20] },
+                up: { spritesheet: 'back', frames: [0, 20] },
+                left: { spritesheet: 'front', frames: [0, 20] },
+            }
 };
 
 
@@ -177,14 +177,14 @@ const foxConfig = {
     spritesheets: {
         front: 'https://raw.githubusercontent.com/its-shashankY/file_Images/refs/heads/main/Fox/fox_down.png',
         back: 'https://raw.githubusercontent.com/its-shashankY/file_Images/refs/heads/main/Fox/Fox_up.png',
-        right: 'https://raw.githubusercontent.com/its-shashankY/file_Images/refs/heads/main/Fox/fox_right.png'
+        left: 'https://raw.githubusercontent.com/its-shashankY/file_Images/refs/heads/main/Fox/fox_right.png'
     },
     frameWidth: 1920,
     frameHeight: 1080,
     layouts: {
         front: { columns: 5, rows: 4, totalFrames: 20 },
         back: { columns: 5, rows: 4, totalFrames: 20 },
-        right: { columns: 5, rows: 4, totalFrames: 20 }
+        left: { columns: 5, rows: 4, totalFrames: 20 }
     },
     animationSpeed: 0.3,
     scale: 0.4,
@@ -196,10 +196,10 @@ const foxConfig = {
         followSpeed: 1.2
     },
     directions: {
-        down: { spritesheet: 'front', frames: [0, 20] },
-        right: { spritesheet: 'right', frames: [0, 20] },
-        up: { spritesheet: 'back', frames: [0, 20] },
-        left: { spritesheet: 'right', frames: [0, 20] } // Use right and flip for left
+        down: { spritesheet: 'back', frames: [0, 20] },
+        right: { spritesheet: 'left', frames: [0, 20] },
+        up: { spritesheet: 'front', frames: [0, 20] },
+        left: { spritesheet: 'front', frames: [0, 20] } // Use right and flip for left
     }
 };
 
@@ -208,17 +208,17 @@ const monkConfig = {
     spritesheets: {
         front: 'https://raw.githubusercontent.com/its-shashankY/file_Images/refs/heads/main/Monk/monk_down.png',
         back: 'https://raw.githubusercontent.com/its-shashankY/file_Images/refs/heads/main/Monk/monk_up.png',
-        right: 'https://raw.githubusercontent.com/its-shashankY/file_Images/refs/heads/main/Monk/monk_right.png'
+        left: 'https://raw.githubusercontent.com/its-shashankY/file_Images/refs/heads/main/Monk/monk_right.png'
     },
     frameWidth: 1920,
     frameHeight: 1080,
     layouts: {
         front: { columns: 5, rows: 4, totalFrames: 20 },
         back: { columns: 5, rows: 4, totalFrames: 20 },
-        right: { columns: 5, rows: 4, totalFrames: 20 }
+        left: { columns: 5, rows: 4, totalFrames: 20 }
     },
     animationSpeed: 0.3,
-    scale: 0.4,
+    scale: 0.6,
     startPosition: { x: 14, y: 14 },
     moveSpeed: 1,
     territory: {
@@ -227,10 +227,10 @@ const monkConfig = {
         followSpeed: 1.2
     },
     directions: {
-        down: { spritesheet: 'front', frames: [0, 20] },
-        right: { spritesheet: 'right', frames: [0, 20] },
-        up: { spritesheet: 'back', frames: [0, 20] },
-        left: { spritesheet: 'right', frames: [0, 20] } // Use right and flip for left
+        down: { spritesheet: 'back', frames: [0, 20] },
+        right: { spritesheet: 'left', frames: [0, 20] },
+        up: { spritesheet: 'front', frames: [0, 20] },
+        left: { spritesheet: 'front', frames: [0, 20] } // Use right and flip for left
     }
 };
 
@@ -327,8 +327,8 @@ const monkConfig = {
         
 
         let cat;
-        let catSpritesheetTextures = { front: null, back: null, right: null };
-        let catFrames = { front: [], back: [], right: [] };
+        let catSpritesheetTextures = { front: null, back: null, left: null };
+        let catFrames = { front: [], back: [], left: [] };
         let catGridPosition = { x: catConfig.startPosition.x, y: catConfig.startPosition.y };
         let catDirection = 'down';
         let catState = 'patrol';
@@ -337,8 +337,8 @@ const monkConfig = {
 
 
         let fox;
-        let foxSpritesheetTextures = { front: null, back: null, right: null };
-        let foxFrames = { front: [], back: [], right: [] };
+        let foxSpritesheetTextures = { front: null, back: null, left: null };
+        let foxFrames = { front: [], back: [], left: [] };
         let foxGridPosition = { x: foxConfig.startPosition.x, y: foxConfig.startPosition.y };
         let foxDirection = 'down';
         let foxState = 'patrol';
@@ -349,8 +349,8 @@ const monkConfig = {
 
 
         let monk;
-        let monkSpritesheetTextures = { front: null, back: null, right: null };
-        let monkFrames = { front: [], back: [], right: [] };
+        let monkSpritesheetTextures = { front: null, back: null, left: null };
+        let monkFrames = { front: [], back: [], left: [] };
         let monkGridPosition = { x: monkConfig.startPosition.x, y: monkConfig.startPosition.y };
         let monkDirection = 'down';
         let monkState = 'patrol';
@@ -615,7 +615,7 @@ Promise.all(texturePromises).then(() => {
 
         function createCatFrames() {
             try {
-                for (const sheetType of ['front', 'back', 'right']) {
+                for (const sheetType of ['front', 'back', 'left']) {
                     catFrames[sheetType] = [];
                     const baseTexture = catSpritesheetTextures[sheetType].baseTexture;
                     const layout = catConfig.layouts[sheetType];
@@ -643,7 +643,7 @@ Promise.all(texturePromises).then(() => {
 
         function createFoxFrames() {
     try {
-        for (const sheetType of ['front', 'back', 'right']) {
+        for (const sheetType of ['front', 'back', 'left']) {
             foxFrames[sheetType] = [];
             const baseTexture = foxSpritesheetTextures[sheetType].baseTexture;
             const layout = foxConfig.layouts[sheetType];
@@ -672,7 +672,7 @@ Promise.all(texturePromises).then(() => {
 
 function createMonkFrames() {
     try {
-        for (const sheetType of ['front', 'back', 'right']) {
+        for (const sheetType of ['front', 'back', 'left']) {
             monkFrames[sheetType] = [];
             const baseTexture = monkSpritesheetTextures[sheetType].baseTexture;
             const layout = monkConfig.layouts[sheetType];
@@ -766,7 +766,7 @@ function createMonkFrames() {
         function getFoxDirectionFrames(direction) {
     const dirConfig = foxConfig.directions[direction] || foxConfig.directions.down;
     const { spritesheet, frames } = dirConfig;
-    return foxFrames[spritesheet].slice(frames[0], frames[1]);
+    return foxFrames[spritesheet].slice(frames[0], frames[1]+1);
 }
 
 
@@ -857,8 +857,8 @@ function createMonkFrames() {
 
         function centerCameraOnPlayer() {
             if (!player) return;
-            const screenCenterX = app.screen.width / 2;
-            const screenCenterY = app.screen.height / 2;
+            const screenCenterX = app.screen.width / 1.5;
+            const screenCenterY = app.screen.height / 1.5;
             mapContainer.x = screenCenterX - player.x * mapContainer.scale.x;
             mapContainer.y = screenCenterY - player.y * mapContainer.scale.y;
         }
@@ -901,19 +901,19 @@ function createMonkFrames() {
             }
         }
 
-        function updateBoarPosition() {
+       function updateBoarPosition() {
             const isoX = (boarGridPosition.x - boarGridPosition.y) * (mapData.tileWidth / 4);
             const isoY = (boarGridPosition.x + boarGridPosition.y) * (mapData.tileHeight / 2);
             boar.x = isoX;
             boar.y = isoY;
 
-            // if (boarDirection === 'left') {
-            //     boar.scale.x = -boarConfig.scale; // Flip sprite for left
-            //     boar.anchor.x = 0.5;
-            // } else if (boarDirection === 'right') {
-            //     boar.scale.x = boarConfig.scale; // Normal scale for right
-            //     boar.anchor.x = 0.5;
-            // }
+            // Flip sprite for left direction using negative scale
+            if (boarDirection === 'left') {
+                boar.scale.x = -Math.abs(boarConfig.scale);
+            } else {
+                boar.scale.x = Math.abs(boarConfig.scale);
+            }
+            boar.anchor.x = 0.5;
         }
 
        function updateBoarAnimation(direction) {
@@ -1072,7 +1072,7 @@ function updateCat(delta) {
         if (Math.abs(dx) > Math.abs(dy)) {
             catDirection = dx > 0 ? 'right' : 'left';
         } else {
-            catDirection = dy > 0 ? 'down' : 'up';
+            catDirection = dy > 0 ? 'up' : 'down';
         }
     } else {
         // Patrol: return to original position
